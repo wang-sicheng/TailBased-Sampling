@@ -49,6 +49,7 @@ public class CheckSumService implements Runnable{
                 Map<String, Set<String>> map = new HashMap<>();
                 if (traceIdBatch.getTraceIdList().size() > 0) {
                     int batchPos = traceIdBatch.getBatchPos();
+                    // to get all spans from remote
                     for (String port : ports) {
                         Map<String, List<String>> processMap =
                                 getWrongTrace(JSON.toJSONString(traceIdBatch.getTraceIdList()), port, batchPos);
@@ -64,8 +65,6 @@ public class CheckSumService implements Runnable{
                             }
                         }
                     }
-
-
                 }
 
                 for (Map.Entry<String, Set<String>> entry : map.entrySet()) {

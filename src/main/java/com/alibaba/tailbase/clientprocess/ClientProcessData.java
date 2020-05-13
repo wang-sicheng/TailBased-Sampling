@@ -25,7 +25,7 @@ public class ClientProcessData implements Runnable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientProcessData.class.getName());
 
-    // an list of trace map,like ring buffe.  key is trace, value is spans ,  r
+    // an list of trace map,like ring buffe.  key is traceId, value is spans ,  r
     private static List<Map<String,List<String>>> BATCH_TRACE_LIST = new ArrayList<>();
     // make 50 bucket to cache traceData
     private static int BATCH_COUNT = 15;
@@ -89,6 +89,7 @@ public class ClientProcessData implements Runnable {
                     }
                     traceMap = BATCH_TRACE_LIST.get(pos);
                     // donot produce data, wait backend to consume data
+                    // TODO to use lock/notify
                     if (traceMap.size() > 0) {
                         while (true) {
                             Thread.sleep(10);
@@ -97,7 +98,7 @@ public class ClientProcessData implements Runnable {
                             }
                         }
                     }
-                    // batchPos begin from 0, so need to ninus 1
+                    // batchPos begin from 0, so need to minus 1
                     int batchPos = (int) count / Constants.BATCH_SIZE - 1;
                     updateWrongTraceId(badTraceIdList, batchPos);
                     badTraceIdList.clear();
@@ -175,6 +176,7 @@ public class ClientProcessData implements Runnable {
 
             }
         }
+        // to clear spans, don't block client process thread. TODO to use lock/notify
         BATCH_TRACE_LIST.get(pos).clear();
         return JSON.toJSONString(wrongTraceMap);
     }

@@ -21,7 +21,7 @@ public class BackendController {
     // FINISH_PROCESS_COUNT will add one, when process call finish();
     private static volatile Integer FINISH_PROCESS_COUNT = 0;
 
-    // save 100 batch for wrong trace
+    // save 90 batch for wrong trace
     private static int BATCH_COUNT = 90;
     private static List<TraceIdBatch> TRACEID_BATCH_LIST= new ArrayList<>();
     public static  void init() {
