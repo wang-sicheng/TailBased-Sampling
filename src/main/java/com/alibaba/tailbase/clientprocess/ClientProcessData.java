@@ -153,7 +153,7 @@ public class ClientProcessData implements Runnable {
         List<String> traceIdList = JSON.parseObject(wrongTraceIdList, new TypeReference<List<String>>(){});
         Map<String,List<String>> wrongTraceMap = new HashMap<>();
         int pos = batchPos % BATCH_COUNT;
-        int previous = pos -1;
+        int previous = pos - 1;
         if (previous == -1) {
             previous = BATCH_COUNT -1;
         }
@@ -161,24 +161,33 @@ public class ClientProcessData implements Runnable {
         if (next == BATCH_COUNT) {
             next = 0;
         }
-        for (int i = previous; i <= next; i++) {
-            // donot lock traceMap,  traceMap may be clear anytime.
-            Map<String, List<String>> traceMap = BATCH_TRACE_LIST.get(pos);
-            for (String traceId : traceIdList) {
-                List<String> spanList = traceMap.get(traceId);
-                if (spanList != null) {
-                    wrongTraceMap.put(traceId, spanList);
-                    // output spanlist to check
-                    String spanListString = spanList.stream().collect(Collectors.joining("\n"));
-                    LOGGER.info(String.format("getWrongTracing, batchPos:%d, traceId:%s, spanList:\n %s",
-                            batchPos, traceId, spanListString));
-                }
+        getWrongTraceWithBatch(previous, pos, traceIdList, wrongTraceMap);
+        getWrongTraceWithBatch(pos, pos, traceIdList,  wrongTraceMap);
+        getWrongTraceWithBatch(next, pos, traceIdList, wrongTraceMap);
+        // to clear spans, don't block client process thread. TODO to use lock/notify
+        BATCH_TRACE_LIST.get(previous).clear();
+        return JSON.toJSONString(wrongTraceMap);
+    }
 
+    private static void getWrongTraceWithBatch(int batchPos, int pos,  List<String> traceIdList, Map<String,List<String>> wrongTraceMap) {
+        // donot lock traceMap,  traceMap may be clear anytime.
+        Map<String, List<String>> traceMap = BATCH_TRACE_LIST.get(batchPos);
+        for (String traceId : traceIdList) {
+            List<String> spanList = traceMap.get(traceId);
+            if (spanList != null) {
+                // one trace may cross to batch (e.g batch size 20000, span1 in line 19999, span2 in line 20001)
+                List<String> existSpanList = wrongTraceMap.get(traceId);
+                if (existSpanList != null) {
+                    existSpanList.addAll(spanList);
+                } else {
+                    wrongTraceMap.put(traceId, spanList);
+                }
+                // output spanlist to check
+                String spanListString = spanList.stream().collect(Collectors.joining("\n"));
+                LOGGER.info(String.format("getWrongTracing, batchPos:%d, pos:%d, traceId:%s, spanList:\n %s",
+                        batchPos, pos,  traceId, spanListString));
             }
         }
-        // to clear spans, don't block client process thread. TODO to use lock/notify
-        BATCH_TRACE_LIST.get(pos).clear();
-        return JSON.toJSONString(wrongTraceMap);
     }
 
     private String getPath(){
