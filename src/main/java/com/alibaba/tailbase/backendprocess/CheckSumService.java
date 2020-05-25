@@ -47,7 +47,7 @@ public class CheckSumService implements Runnable{
                     continue;
                 }
                 Map<String, Set<String>> map = new HashMap<>();
-                if (traceIdBatch.getTraceIdList().size() > 0) {
+               // if (traceIdBatch.getTraceIdList().size() > 0) {
                     int batchPos = traceIdBatch.getBatchPos();
                     // to get all spans from remote
                     for (String port : ports) {
@@ -65,7 +65,8 @@ public class CheckSumService implements Runnable{
                             }
                         }
                     }
-                }
+                    LOGGER.info("getWrong:" + batchPos + ", traceIdsize:" + traceIdBatch.getTraceIdList().size() + ",result:" + map.size());
+               // }
 
                 for (Map.Entry<String, Set<String>> entry : map.entrySet()) {
                     String traceId = entry.getKey();
@@ -75,7 +76,7 @@ public class CheckSumService implements Runnable{
                             Comparator.comparing(CheckSumService::getStartTime)).collect(Collectors.joining("\n"));
                     spans = spans + "\n";
                     // output all span to check
-                    LOGGER.info("traceId:" + traceId + ",value:\n" + spans);
+                   // LOGGER.info("traceId:" + traceId + ",value:\n" + spans);
                     TRACE_CHUCKSUM_MAP.put(traceId, Utils.MD5(spans));
                 }
             } catch (Exception e) {

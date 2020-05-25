@@ -21,6 +21,9 @@ public class BackendController {
     // FINISH_PROCESS_COUNT will add one, when process call finish();
     private static volatile Integer FINISH_PROCESS_COUNT = 0;
 
+    // single thread to run, do not use lock
+    private static volatile Integer CURRENT_BATCH = 0;
+
     // save 90 batch for wrong trace
     private static int BATCH_COUNT = 90;
     private static List<TraceIdBatch> TRACEID_BATCH_LIST= new ArrayList<>();
@@ -79,22 +82,24 @@ public class BackendController {
      * @return
      */
     public static TraceIdBatch getFinishedBatch() {
-        for (int i = 0; i < BATCH_COUNT; i++) {
-            int next = i + 1;
-            if (next >= BATCH_COUNT) {
-                next = 0;
-            }
-            TraceIdBatch currentBatch = TRACEID_BATCH_LIST.get(i);
-            TraceIdBatch nextBatch = TRACEID_BATCH_LIST.get(next);
-            // when client process is finished, or then next trace batch is finished. to get checksum for wrong traces.
-            if ((FINISH_PROCESS_COUNT >= Constants.PROCESS_COUNT && currentBatch.getBatchPos() > 0) ||
-                    (nextBatch.getProcessCount() >= PROCESS_COUNT && currentBatch.getProcessCount() >= PROCESS_COUNT)) {
-                // reset
-                TraceIdBatch newTraceIdBatch = new TraceIdBatch();
-                TRACEID_BATCH_LIST.set(i, newTraceIdBatch);
-                return currentBatch;
-            }
+
+
+        int next = CURRENT_BATCH + 1;
+        if (next >= BATCH_COUNT) {
+            next = 0;
         }
+        TraceIdBatch nextBatch = TRACEID_BATCH_LIST.get(next);
+        TraceIdBatch currentBatch = TRACEID_BATCH_LIST.get(CURRENT_BATCH);
+        // when client process is finished, or then next trace batch is finished. to get checksum for wrong traces.
+        if ((FINISH_PROCESS_COUNT >= Constants.PROCESS_COUNT && currentBatch.getBatchPos() > 0) ||
+                (nextBatch.getProcessCount() >= PROCESS_COUNT && currentBatch.getProcessCount() >= PROCESS_COUNT)) {
+            // reset
+            TraceIdBatch newTraceIdBatch = new TraceIdBatch();
+            TRACEID_BATCH_LIST.set(CURRENT_BATCH, newTraceIdBatch);
+            CURRENT_BATCH = next;
+            return currentBatch;
+        }
+
         return null;
     }
 
