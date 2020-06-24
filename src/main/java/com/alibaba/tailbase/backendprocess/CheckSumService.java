@@ -48,7 +48,9 @@ public class CheckSumService implements Runnable{
                     }
                     continue;
                 }
+                times++;
 
+                System.out.println("times: " + times);
                 Map<String, Set<String>> map = new HashMap<>();
                // if (traceIdBatch.getTraceIdList().size() > 0) {
                     int batchPos = traceIdBatch.getBatchPos();
