@@ -1,9 +1,0 @@
-/Users/wsc/Github/tail-based-sampling/src/main/java/com/alibaba/tailbase/Constants.java
-/Users/wsc/Github/tail-based-sampling/src/main/java/com/alibaba/tailbase/backendprocess/CheckSumService.java
-/Users/wsc/Github/tail-based-sampling/src/main/java/com/alibaba/tailbase/MultiEntry.java
-/Users/wsc/Github/tail-based-sampling/src/main/java/com/alibaba/tailbase/backendprocess/BackendController.java
-/Users/wsc/Github/tail-based-sampling/src/main/java/com/alibaba/tailbase/clientprocess/ClientProcessData.java
-/Users/wsc/Github/tail-based-sampling/src/main/java/com/alibaba/tailbase/Utils.java
-/Users/wsc/Github/tail-based-sampling/src/main/java/com/alibaba/tailbase/backendprocess/TraceIdBatch.java
-/Users/wsc/Github/tail-based-sampling/src/main/java/com/alibaba/tailbase/clientprocess/ClientController.java
-/Users/wsc/Github/tail-based-sampling/src/main/java/com/alibaba/tailbase/CommonController.java
