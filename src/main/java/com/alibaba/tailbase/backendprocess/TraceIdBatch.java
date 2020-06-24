@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TraceIdBatch {
+    // 对应 Client 的批次
     private int batchPos = 0;
     private int processCount = 0;
     private List<String> traceIdList = new ArrayList<>(Constants.BATCH_SIZE / 10);
@@ -29,5 +30,4 @@ public class TraceIdBatch {
     public List<String> getTraceIdList() {
         return traceIdList;
     }
-
 }

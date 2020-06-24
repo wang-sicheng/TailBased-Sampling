@@ -17,7 +17,7 @@ public class CommonController {
 
   @RequestMapping("/ready")
   public String ready() {
-    return "suc";
+    return "success";
   }
 
   @RequestMapping("/setParameter")
@@ -26,14 +26,6 @@ public class CommonController {
     if (Utils.isClientProcess()) {
       ClientProcessData.start();
     }
-    return "suc";
+    return "success";
   }
-
-  @RequestMapping("/start")
-  public String start() {
-    return "suc";
-  }
-
-
-
 }

@@ -19,6 +19,7 @@ import static com.alibaba.tailbase.Constants.CLIENT_PROCESS_PORT2;
 
 public class CheckSumService implements Runnable{
 
+    private static volatile int times = 0;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientProcessData.class.getName());
 
@@ -37,6 +38,7 @@ public class CheckSumService implements Runnable{
         while (true) {
             try {
                 traceIdBatch = BackendController.getFinishedBatch();
+
                 if (traceIdBatch == null) {
                     // send checksum when client process has all finished.
                     if (BackendController.isFinished()) {
@@ -46,6 +48,7 @@ public class CheckSumService implements Runnable{
                     }
                     continue;
                 }
+
                 Map<String, Set<String>> map = new HashMap<>();
                // if (traceIdBatch.getTraceIdList().size() > 0) {
                     int batchPos = traceIdBatch.getBatchPos();
@@ -117,7 +120,7 @@ public class CheckSumService implements Runnable{
             response.close();
             return resultMap;
         } catch (Exception e) {
-            LOGGER.warn("fail to getWrongTrace, json:" + traceIdList + ",batchPos:" + batchPos, e);
+            LOGGER.warn("fail to getWrongTrace,batchPos:" + batchPos, e);
         }
         return null;
     }
@@ -133,7 +136,7 @@ public class CheckSumService implements Runnable{
             Response response = Utils.callHttp(request);
             if (response.isSuccessful()) {
                 response.close();
-                LOGGER.warn("suc to sendCheckSum, result:" + result);
+                LOGGER.warn("suc to sendCheckSum");
                 return true;
             }
             LOGGER.warn("fail to sendCheckSum:" + response.message());

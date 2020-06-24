@@ -10,8 +10,6 @@ import org.springframework.context.annotation.ComponentScan;
 @EnableAutoConfiguration
 @ComponentScan(basePackages = "com.alibaba.tailbase")
 public class MultiEntry {
-
-
     public static void main(String[] args) {
         if (Utils.isBackendProcess()) {
             BackendController.init();
@@ -21,12 +19,6 @@ public class MultiEntry {
             ClientProcessData.init();
         }
         String port = System.getProperty("server.port", "8080");
-        SpringApplication.run(MultiEntry.class,
-                "--server.port=" + port
-        );
-
+        SpringApplication.run(MultiEntry.class,"--server.port=" + port);
     }
-
-
-
 }

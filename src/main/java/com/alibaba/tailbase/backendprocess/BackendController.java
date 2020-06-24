@@ -39,13 +39,14 @@ public class BackendController {
         int pos = batchPos % BATCH_COUNT;
         List<String> traceIdList = JSON.parseObject(traceIdListJson, new TypeReference<List<String>>() {
         });
-        LOGGER.info(String.format("setWrongTraceId had called, batchPos:%d, traceIdList:%s", batchPos, traceIdListJson));
+        LOGGER.info(String.format("setWrongTraceId had called, batchPos:%d", batchPos));
         TraceIdBatch traceIdBatch = TRACEID_BATCH_LIST.get(pos);
         if (traceIdBatch.getBatchPos() != 0 && traceIdBatch.getBatchPos() != batchPos) {
             LOGGER.warn("overwrite traceId batch when call setWrongTraceId");
         }
 
-        if (traceIdList != null && traceIdList.size() > 0) {
+        // 不能有 traceIdList.size() > 0
+        if (traceIdList != null) {
             traceIdBatch.setBatchPos(batchPos);
             traceIdBatch.setProcessCount(traceIdBatch.getProcessCount() + 1);
             traceIdBatch.getTraceIdList().addAll(traceIdList);
@@ -83,23 +84,31 @@ public class BackendController {
      */
     public static TraceIdBatch getFinishedBatch() {
 
-
         int next = CURRENT_BATCH + 1;
         if (next >= BATCH_COUNT) {
             next = 0;
         }
         TraceIdBatch nextBatch = TRACEID_BATCH_LIST.get(next);
         TraceIdBatch currentBatch = TRACEID_BATCH_LIST.get(CURRENT_BATCH);
+        System.out.println("currentBatch: " + currentBatch.getBatchPos() + " proccessCount: " + currentBatch.getProcessCount());
+        System.out.println("currentBatch content: " + currentBatch.getTraceIdList());
+        System.out.println("nextBatch: " + nextBatch.getBatchPos() + " proccessCount: " + nextBatch.getProcessCount());
+        System.out.println("nextBatch content: " + nextBatch.getTraceIdList());
         // when client process is finished, or then next trace batch is finished. to get checksum for wrong traces.
-        if ((FINISH_PROCESS_COUNT >= Constants.PROCESS_COUNT && currentBatch.getBatchPos() > 0) ||
-                (nextBatch.getProcessCount() >= PROCESS_COUNT && currentBatch.getProcessCount() >= PROCESS_COUNT)) {
-            // reset
+        // 两个client程序已结束
+        if (FINISH_PROCESS_COUNT >= PROCESS_COUNT && currentBatch.getBatchPos() > 0) {
             TraceIdBatch newTraceIdBatch = new TraceIdBatch();
             TRACEID_BATCH_LIST.set(CURRENT_BATCH, newTraceIdBatch);
             CURRENT_BATCH = next;
             return currentBatch;
         }
 
+        if (nextBatch.getProcessCount() >= PROCESS_COUNT && currentBatch.getProcessCount() >= PROCESS_COUNT) {
+            TraceIdBatch newTraceIdBatch = new TraceIdBatch();
+            TRACEID_BATCH_LIST.set(CURRENT_BATCH, newTraceIdBatch);
+            CURRENT_BATCH = next;
+            return currentBatch;
+        }
         return null;
     }
 
