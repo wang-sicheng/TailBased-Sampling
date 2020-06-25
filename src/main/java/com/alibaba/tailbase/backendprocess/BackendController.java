@@ -69,10 +69,7 @@ public class BackendController {
                return false;
            }
        }
-       if (FINISH_PROCESS_COUNT < Constants.PROCESS_COUNT) {
-           return false;
-       }
-       return true;
+       return FINISH_PROCESS_COUNT >= Constants.PROCESS_COUNT;
    }
 
     /**
@@ -80,27 +77,17 @@ public class BackendController {
      * @return
      */
     public static TraceIdBatch getFinishedBatch() {
-
         int next = CURRENT_BATCH + 1;
         if (next >= BATCH_COUNT) {
             next = 0;
         }
         TraceIdBatch nextBatch = TRACEID_BATCH_LIST.get(next);
         TraceIdBatch currentBatch = TRACEID_BATCH_LIST.get(CURRENT_BATCH);
-        System.out.println("currentBatch: " + currentBatch.getBatchPos() + " proccessCount: " + currentBatch.getProcessCount());
-        System.out.println("currentBatch content: " + currentBatch.getTraceIdList());
-        System.out.println("nextBatch: " + nextBatch.getBatchPos() + " proccessCount: " + nextBatch.getProcessCount());
-        System.out.println("nextBatch content: " + nextBatch.getTraceIdList());
-        // when client process is finished, or then next trace batch is finished. to get checksum for wrong traces.
-        // 两个client程序已结束
-        if (FINISH_PROCESS_COUNT >= PROCESS_COUNT && currentBatch.getBatchPos() > 0) {
-            TraceIdBatch newTraceIdBatch = new TraceIdBatch();
-            TRACEID_BATCH_LIST.set(CURRENT_BATCH, newTraceIdBatch);
-            CURRENT_BATCH = next;
-            return currentBatch;
-        }
 
-        if (nextBatch.getProcessCount() >= PROCESS_COUNT && currentBatch.getProcessCount() >= PROCESS_COUNT) {
+        // when client process is finished, or then next trace batch is finished. to get checksum for wrong traces.
+        boolean cond1 = FINISH_PROCESS_COUNT >= PROCESS_COUNT && currentBatch.getBatchPos() > 0;
+        boolean cond2 = currentBatch.getProcessCount() >= PROCESS_COUNT && nextBatch.getProcessCount() >= PROCESS_COUNT;
+        if (cond1 || cond2) {
             TraceIdBatch newTraceIdBatch = new TraceIdBatch();
             TRACEID_BATCH_LIST.set(CURRENT_BATCH, newTraceIdBatch);
             CURRENT_BATCH = next;
@@ -108,5 +95,4 @@ public class BackendController {
         }
         return null;
     }
-
 }

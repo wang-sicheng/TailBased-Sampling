@@ -118,7 +118,7 @@ public class ClientProcessData implements Runnable {
         // 无论List是否为空都必须发起一次Request，因为Backend需要统计操作次数
         //if (badTraceIdSet.size() > 0) {
             try {
-                LOGGER.info("updateBadTraceId, batchPos:" + batchPos + ", TraceNum: " + badTraceIdSet.size());
+                LOGGER.info("updateBadTraceId, batchPos:" + batchPos);
                 RequestBody body = new FormBody.Builder()
                         .add("traceIdListJson", json)
                         .add("batchPos", batchPos + "").build();
@@ -160,7 +160,7 @@ public class ClientProcessData implements Runnable {
         getWrongTraceWithBatch(next, traceIdList, wrongTraceMap);
         // to clear spans, don't block client process thread. TODO to use lock/notify
         BATCH_TRACE_LIST.get(previous).clear();
-        LOGGER.info("getWrongTrace, batchPos:" + batchPos + ", TraceNum: " + wrongTraceMap.size());
+        LOGGER.info("getWrongTrace, batchPos:" + batchPos);
         return JSON.toJSONString(wrongTraceMap);
     }
 
