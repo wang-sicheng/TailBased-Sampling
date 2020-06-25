@@ -13,8 +13,8 @@ public class Utils {
 
     private final static OkHttpClient OK_HTTP_CLIENT = new OkHttpClient.Builder()
             .connectTimeout(50L,TimeUnit.SECONDS)
-                        .readTimeout(60L, TimeUnit.SECONDS)
-                        .build();
+            .readTimeout(60L, TimeUnit.SECONDS)
+            .build();
 
     public static Response callHttp(Request request) throws IOException {
         Call call = OK_HTTP_CLIENT.newCall(request);
@@ -62,18 +62,12 @@ public class Utils {
 
     public static boolean isClientProcess() {
         String port = System.getProperty("server.port", "8080");
-        if (Constants.CLIENT_PROCESS_PORT1.equals(port) ||
-                Constants.CLIENT_PROCESS_PORT2.equals(port)) {
-            return true;
-        }
-        return false;
+        return Constants.CLIENT_PROCESS_PORT1.equals(port) ||
+                Constants.CLIENT_PROCESS_PORT2.equals(port);
     }
 
     public static boolean isBackendProcess() {
         String port = System.getProperty("server.port", "8080");
-        if (Constants.BACKEND_PROCESS_PORT1.equals(port)) {
-            return true;
-        }
-        return false;
+        return Constants.BACKEND_PROCESS_PORT1.equals(port);
     }
 }

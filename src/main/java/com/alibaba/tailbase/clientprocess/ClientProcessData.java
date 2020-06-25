@@ -64,9 +64,7 @@ public class ClientProcessData implements Runnable {
                 String[] cols = line.split("\\|");
                 if (cols.length > 1) {
                     String traceId = cols[0];
-
                     traceMap.computeIfAbsent(traceId, k -> new ArrayList<>()).add(line);
-
                     if (cols.length > 8) {
                         String tags = cols[8];
                         if (tags != null) {
@@ -179,8 +177,6 @@ public class ClientProcessData implements Runnable {
                 } else {
                     wrongTraceMap.put(traceId, spanList);
                 }
-                // output spanlist to check
-                String spanListString = spanList.stream().collect(Collectors.joining("\n"));
             }
         }
     }

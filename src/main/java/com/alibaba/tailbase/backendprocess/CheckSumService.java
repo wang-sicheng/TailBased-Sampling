@@ -48,9 +48,6 @@ public class CheckSumService implements Runnable{
                     }
                     continue;
                 }
-                times++;
-
-                System.out.println("times: " + times);
                 Map<String, Set<String>> map = new HashMap<>();
                // if (traceIdBatch.getTraceIdList().size() > 0) {
                     int batchPos = traceIdBatch.getBatchPos();
@@ -61,12 +58,7 @@ public class CheckSumService implements Runnable{
                         if (processMap != null) {
                             for (Map.Entry<String, List<String>> entry : processMap.entrySet()) {
                                 String traceId = entry.getKey();
-                                Set<String> spanSet = map.get(traceId);
-                                if (spanSet == null) {
-                                    spanSet = new HashSet<>();
-                                    map.put(traceId, spanSet);
-                                }
-                                spanSet.addAll(entry.getValue());
+                                map.computeIfAbsent(traceId, k -> new HashSet<>()).addAll(entry.getValue());
                             }
                         }
                     }
@@ -159,6 +151,4 @@ public class CheckSumService implements Runnable{
         }
         return -1;
     }
-
-
 }

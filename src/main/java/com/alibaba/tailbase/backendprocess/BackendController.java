@@ -41,9 +41,6 @@ public class BackendController {
         });
         LOGGER.info(String.format("setWrongTraceId had called, batchPos:%d", batchPos));
         TraceIdBatch traceIdBatch = TRACEID_BATCH_LIST.get(pos);
-        if (traceIdBatch.getBatchPos() != 0 && traceIdBatch.getBatchPos() != batchPos) {
-            LOGGER.warn("overwrite traceId batch when call setWrongTraceId");
-        }
 
         // 不能有 traceIdList.size() > 0
         if (traceIdList != null) {
