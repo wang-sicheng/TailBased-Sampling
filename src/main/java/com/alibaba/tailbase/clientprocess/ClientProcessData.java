@@ -18,7 +18,6 @@ import java.net.Proxy;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 
 public class ClientProcessData implements Runnable {
@@ -43,7 +42,7 @@ public class ClientProcessData implements Runnable {
     @Override
     public void run() {
         try {
-            String path = getPath();
+            String path = getPathNative();
             // process data on client, not server
             if (StringUtils.isEmpty(path)) {
                 LOGGER.warn("path is empty");

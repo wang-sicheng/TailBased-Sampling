@@ -2,7 +2,12 @@
 <module org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule="true" type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="Spring" name="Spring">
-      <configuration />
+      <configuration>
+        <fileset id="fileset" name="BackendConfig" removed="false">
+          <dependency>spring_boot_com.alibaba.tailbase.MultiEntry</dependency>
+          <file>file://$MODULE_DIR$/src/main/resources/backendConfig.xml</file>
+        </fileset>
+      </configuration>
     </facet>
     <facet type="web" name="Web">
       <configuration>
