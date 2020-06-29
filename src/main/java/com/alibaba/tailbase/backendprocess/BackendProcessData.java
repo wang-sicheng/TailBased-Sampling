@@ -3,8 +3,8 @@ package com.alibaba.tailbase.backendprocess;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import com.alibaba.tailbase.CommonController;
+import com.alibaba.tailbase.Constants;
 import com.alibaba.tailbase.Utils;
-import com.alibaba.tailbase.clientprocess.ClientProcessData;
 import okhttp3.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,21 +14,31 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import static com.alibaba.tailbase.Constants.CLIENT_PROCESS_PORT1;
-import static com.alibaba.tailbase.Constants.CLIENT_PROCESS_PORT2;
+import static com.alibaba.tailbase.Constants.*;
+import static com.alibaba.tailbase.Constants.PROCESS_COUNT;
 
-public class CheckSumService implements Runnable{
+public class BackendProcessData implements Runnable{
 
-    private static volatile int times = 0;
+    private static final Logger LOGGER = LoggerFactory.getLogger(BackendController.class.getName());
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ClientProcessData.class.getName());
+    private static volatile Integer FINISH_PROCESS_COUNT = 0;
 
-    // save chuckSum for the total wrong trace
-    private static Map<String, String> TRACE_CHUCKSUM_MAP= new ConcurrentHashMap<>();
+    private static volatile Integer CURRENT_BATCH = 0;
+
+    private static int BATCH_COUNT = 90;
+
+    private static List<TraceIdBatch> TRACEID_BATCH_LIST= new ArrayList<>();
+
+    private static Map<String, String> TRACE_CHECKSUM_MAP= new ConcurrentHashMap<>();
+
+    public static  void init() {
+        for (int i = 0; i < BATCH_COUNT; i++) {
+            TRACEID_BATCH_LIST.add(new TraceIdBatch());
+        }
+    }
 
     public static void start() {
-        Thread t = new Thread(new CheckSumService(), "CheckSumServiceThread");
-        t.start();
+        new Thread(new BackendProcessData(), "BackendProcessThread").start();
     }
 
     @Override
@@ -37,11 +47,11 @@ public class CheckSumService implements Runnable{
         String[] ports = new String[]{CLIENT_PROCESS_PORT1, CLIENT_PROCESS_PORT2};
         while (true) {
             try {
-                traceIdBatch = BackendController.getFinishedBatch();
+                traceIdBatch = getFinishedBatch();
 
                 if (traceIdBatch == null) {
                     // send checksum when client process has all finished.
-                    if (BackendController.isFinished()) {
+                    if (isFinished()) {
                         if (sendCheckSum()) {
                             break;
                         }
@@ -70,11 +80,11 @@ public class CheckSumService implements Runnable{
                     Set<String> spanSet = entry.getValue();
                     // order span with startTime
                     String spans = spanSet.stream().sorted(
-                            Comparator.comparing(CheckSumService::getStartTime)).collect(Collectors.joining("\n"));
+                            Comparator.comparing(BackendProcessData::getStartTime)).collect(Collectors.joining("\n"));
                     spans = spans + "\n";
                     // output all span to check
                    // LOGGER.info("traceId:" + traceId + ",value:\n" + spans);
-                    TRACE_CHUCKSUM_MAP.put(traceId, Utils.MD5(spans));
+                    TRACE_CHECKSUM_MAP.put(traceId, Utils.MD5(spans));
                 }
             } catch (Exception e) {
                 // record batchPos when an exception  occurs.
@@ -122,7 +132,7 @@ public class CheckSumService implements Runnable{
 
     private boolean sendCheckSum() {
         try {
-            String result = JSON.toJSONString(TRACE_CHUCKSUM_MAP);
+            String result = JSON.toJSONString(TRACE_CHECKSUM_MAP);
             RequestBody body = new FormBody.Builder()
                     .add("result", result).build();
             String url = String.format("http://localhost:%s/api/finished", CommonController.getDataSourcePort());
@@ -150,5 +160,66 @@ public class CheckSumService implements Runnable{
             }
         }
         return -1;
+    }
+
+
+    /**
+     * trace batch will be finished, when client process has finished.(FINISH_PROCESS_COUNT == PROCESS_COUNT)
+     * @return
+     */
+    public static boolean isFinished() {
+        for (int i = 0; i < BATCH_COUNT; i++) {
+            TraceIdBatch currentBatch = TRACEID_BATCH_LIST.get(i);
+            if (currentBatch.getBatchPos() != 0) {
+                return false;
+            }
+        }
+        return FINISH_PROCESS_COUNT >= Constants.PROCESS_COUNT;
+    }
+
+    /**
+     * get finished bath when current and next batch has all finished
+     * @return
+     */
+    public static TraceIdBatch getFinishedBatch() {
+        int next = CURRENT_BATCH + 1;
+        if (next >= BATCH_COUNT) {
+            next = 0;
+        }
+        TraceIdBatch nextBatch = TRACEID_BATCH_LIST.get(next);
+        TraceIdBatch currentBatch = TRACEID_BATCH_LIST.get(CURRENT_BATCH);
+
+        // when client process is finished, or then next trace batch is finished. to get checksum for wrong traces.
+        boolean cond1 = FINISH_PROCESS_COUNT >= PROCESS_COUNT && currentBatch.getBatchPos() > 0;
+        boolean cond2 = currentBatch.getProcessCount() >= PROCESS_COUNT && nextBatch.getProcessCount() >= PROCESS_COUNT;
+        if (cond1 || cond2) {
+            TraceIdBatch newTraceIdBatch = new TraceIdBatch();
+            TRACEID_BATCH_LIST.set(CURRENT_BATCH, newTraceIdBatch);
+            CURRENT_BATCH = next;
+            return currentBatch;
+        }
+        return null;
+    }
+
+    public static String setWrongTraceId(@RequestParam String traceIdListJson, @RequestParam int batchPos) {
+        int pos = batchPos % BATCH_COUNT;
+        List<String> traceIdList = JSON.parseObject(traceIdListJson, new TypeReference<List<String>>() {
+        });
+        LOGGER.info(String.format("setWrongTraceId had called, batchPos:%d", batchPos));
+        TraceIdBatch traceIdBatch = TRACEID_BATCH_LIST.get(pos);
+
+        // 不能有 traceIdList.size() > 0
+        if (traceIdList != null) {
+            traceIdBatch.setBatchPos(batchPos);
+            traceIdBatch.setProcessCount(traceIdBatch.getProcessCount() + 1);
+            traceIdBatch.getTraceIdList().addAll(traceIdList);
+        }
+        return "suc";
+    }
+
+    public static String finish() {
+        FINISH_PROCESS_COUNT++;
+        LOGGER.warn("receive call 'finish', count:" + FINISH_PROCESS_COUNT);
+        return "suc";
     }
 }

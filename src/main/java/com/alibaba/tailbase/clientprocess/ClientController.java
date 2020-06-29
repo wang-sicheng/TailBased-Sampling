@@ -13,6 +13,6 @@ import java.util.List;
 public class ClientController {
     @RequestMapping("/getWrongTrace")
     public String getWrongTrace(@RequestParam String traceIdList, @RequestParam Integer batchPos) {
-        return ClientProcessData.getWrongTracing(traceIdList, batchPos);
+        return ClientProcessData.getWrongTrace(traceIdList, batchPos);
     }
 }

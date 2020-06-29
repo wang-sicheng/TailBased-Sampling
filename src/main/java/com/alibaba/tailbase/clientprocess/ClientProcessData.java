@@ -24,10 +24,10 @@ public class ClientProcessData implements Runnable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientProcessData.class.getName());
 
-    // key = traceId, val = all spans of this trace
     private static List<Map<String,List<String>>> BATCH_TRACE_LIST = new ArrayList<>();
 
     private static int BATCH_COUNT = 20;
+
     public static  void init() {
         for (int i = 0; i < BATCH_COUNT; i++) {
             BATCH_TRACE_LIST.add(new ConcurrentHashMap<>(Constants.BATCH_SIZE));
@@ -35,14 +35,13 @@ public class ClientProcessData implements Runnable {
     }
 
     public static void start() {
-        Thread t = new Thread(new ClientProcessData(), "ProcessDataThread");
-        t.start();
+        new Thread(new ClientProcessData(), "ClientProcessDataThread").start();
     }
 
     @Override
     public void run() {
         try {
-            String path = getPathNative();
+            String path = getPath();
             // process data on client, not server
             if (StringUtils.isEmpty(path)) {
                 LOGGER.warn("path is empty");
@@ -142,7 +141,7 @@ public class ClientProcessData implements Runnable {
     }
 
 
-    public static String getWrongTracing(String wrongTraceIdList, int batchPos) {
+    public static String getWrongTrace(String wrongTraceIdList, int batchPos) {
         List<String> traceIdList = JSON.parseObject(wrongTraceIdList, new TypeReference<List<String>>(){});
         Map<String,List<String>> wrongTraceMap = new HashMap<>();
         int pos = batchPos % BATCH_COUNT;
