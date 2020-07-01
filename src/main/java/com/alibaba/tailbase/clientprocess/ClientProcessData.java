@@ -66,10 +66,13 @@ public class ClientProcessData implements Runnable {
                     if (cols.length > 8) {
                         String tags = cols[8];
                         if (tags != null) {
-                            if (tags.contains("error=1")) {
-                                badTraceIdList.add(traceId);
-                            } else if (tags.contains("http.status_code=") && !tags.contains("http.status_code=200")) {
-                                badTraceIdList.add(traceId);
+                            String[] tagArr = tags.split("&");
+                            for (String tag : tagArr) {
+                                if ("error=1".equals(tag)) {
+                                    badTraceIdList.add(traceId);
+                                } else if (tag.contains("http.status_code=") && !tag.contains("http.status_code=200")) {
+                                    badTraceIdList.add(traceId);
+                                }
                             }
                         }
                     }
